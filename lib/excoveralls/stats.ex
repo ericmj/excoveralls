@@ -99,10 +99,21 @@ defmodule ExCoveralls.Stats do
     Regex.replace(~r/\A\n/m, string, "")
   end
 
-  def skip_files(converage) do
+  def skip_files(coverage) do
     skip = ExCoveralls.Settings.get_skip_files
-    Enum.reject(converage, fn cov ->
-      Enum.any?(skip, &Regex.match?(&1, cov[:name]))
+    Enum.map(coverage, fn cov ->
+      if Enum.any?(skip, &Regex.match?(&1, cov[:name])) do
+        update_in(cov[:coverage], &map_lines/1)
+      else
+        cov
+      end
+    end)
+  end
+
+  defp map_lines(lines) do
+    Enum.map(lines, fn
+      0 -> 1
+      x -> x
     end)
   end
 end
